@@ -1,8 +1,9 @@
-samples/cgconfig.conf
-samples/cgconfig.sysconfig
-samples/cgred.conf
-samples/cgrules.conf
-samples/cgsnapshot_blacklist.conf
+samples/config/cgconfig.conf
+samples/config/cgconfig.sysconfig
+samples/config/cgred.conf
+samples/config/cgrules.conf
+samples/config/cgsnapshot_denylist.conf
+samples/config/cgsnapshot_allowlist.conf
 
 scripts/init.d/cgconfig
 scripts/init.d/cgred

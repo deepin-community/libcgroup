@@ -1,29 +1,18 @@
+# SPDX-License-Identifier: LGPL-2.1-only
 #
 # libcgroup googletests Makefile.am
 #
-# Copyright (c) 2019 Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2019-2025 Oracle and/or its affiliates.
 # Author: Tom Hromatka <tom.hromatka@oracle.com>
 #
 
-#
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of version 2.1 of the GNU Lesser General Public License as
-# published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this library; if not, see <http://www.gnu.org/licenses>.
-#
+if WITH_UNITTESTS
 
 AM_CPPFLAGS = -I$(top_srcdir)/include \
 	      -I$(top_srcdir)/src \
 	      -I$(top_srcdir)/src/tools \
-	      -I$(top_builddir)/googletest/googletest/include \
-	      -I$(top_builddir)/googletest/googletest \
+	      -I$(top_srcdir)/googletest/googletest/include \
+	      -I$(top_srcdir)/googletest/googletest \
 	      -std=c++11 \
 	      -Wno-write-strings \
 	      -DSTATIC= \
@@ -31,8 +20,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/include \
 LDADD = $(top_builddir)/src/.libs/libcgroupfortesting.la \
 	$(top_builddir)/src/tools/.libs/libcgset.la
 
-EXTRA_DIST = $(top_srcdir)/googletest/googletest/libgtest.so \
-	     $(top_srcdir)/googletest/googletest/libgtest_main.so \
+EXTRA_DIST = $(top_srcdir)/googletest/build/lib/libgtest.a \
+	     $(top_srcdir)/googletest/build/lib/libgtest_main.a \
 	     $(top_srcdir)/googletest/googletest/include \
 	     libcgroup_unittest.map
 
@@ -55,6 +44,14 @@ gtest_SOURCES = gtest.cpp \
 		013-cgroup_build_tasks_procs_path.cpp \
 		014-cgroupv2_get_subtree_control.cpp \
 		015-cgroupv2_controller_enabled.cpp \
-		016-cgset_parse_r_flag.cpp
-gtest_LDFLAGS = -L$(top_builddir)/googletest/googletest -l:libgtest.so \
-		-rpath $(abs_top_builddir)/googletest/googletest
+		016-cgset_parse_r_flag.cpp \
+		017-API_fuzz_test.cpp \
+		018-get_next_rule_field.cpp
+
+gtest_LDFLAGS = -L$(top_srcdir)/googletest/build/lib -l:libgtest.a \
+		-rpath $(abs_top_srcdir)/googletest/googletest
+
+clean-local:
+	${RM} test-procpidcgroup
+
+endif

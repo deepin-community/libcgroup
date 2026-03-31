@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: LGPL-2.1-only */
 /**
  * libcgroup googletest for cg_build_path()
  *
@@ -5,23 +6,12 @@
  * Author: Tom Hromatka <tom.hromatka@oracle.com>
  */
 
-/*
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of version 2.1 of the GNU Lesser General Public License as
- * published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, see <http://www.gnu.org/licenses>.
- */
-
 #include "gtest/gtest.h"
 
 #include "libcgroup-internal.h"
+
+char * const NAMESPACE1 = "ns1";
+char * const NAMESPACE5 = "ns5";
 
 class BuildPathV1Test : public ::testing::Test {
 	protected:
@@ -46,8 +36,6 @@ class BuildPathV1Test : public ::testing::Test {
 	 * Note that controllers 1 and 5 are also given namespaces
 	 */
 	void SetUp() override {
-		char NAMESPACE1[] = "ns1";
-		char NAMESPACE5[] = "ns5";
 		const int ENTRY_CNT = 6;
 		int i, ret;
 
@@ -57,13 +45,13 @@ class BuildPathV1Test : public ::testing::Test {
 
 		// Populate the mount table
 		for (i = 0; i < ENTRY_CNT; i++) {
-			snprintf(cg_mount_table[i].name, FILENAME_MAX,
+			snprintf(cg_mount_table[i].name, CONTROL_NAMELEN_MAX,
 				 "controller%d", i);
 			cg_mount_table[i].index = i;
 
 			ret = snprintf(cg_mount_table[i].mount.path, FILENAME_MAX,
 				 "/sys/fs/cgroup/%s", cg_mount_table[i].name);
-			ASSERT_LT(ret, sizeof(cg_mount_table[i].mount.path));
+			ASSERT_LT(ret, (int)sizeof(cg_mount_table[i].mount.path));
 
 			cg_mount_table[i].mount.next = NULL;
 		}
@@ -142,7 +130,7 @@ TEST_F(BuildPathV1Test, BuildPathV1_ControllerMatchWithName)
  *
  * This test finds a matching controller in the mount table.  The
  * namespace is valid, but the cgroup name is NULL.  This exercises
- * exercises the `if (cg_namespace_table[i])` statement
+ * the `if (cg_namespace_table[i])` statement
  * https://github.com/libcgroup/libcgroup/blob/62f76650db84c0a25f76ece3a79d9d16a1e9f931/src/api.c#L1278
  */
 TEST_F(BuildPathV1Test, BuildPathV1_ControllerMatchWithNs)

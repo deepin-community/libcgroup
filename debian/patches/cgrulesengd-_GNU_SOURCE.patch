@@ -12,11 +12,13 @@ __USE_XOPEN_EXTENDED). The attached patch fixes this on ia64, although
 is untested elsewhere.
 
 Bug-Debian: https://bugs.debian.org/886744
-Last-Update: 2019-02-22
+Last-Update: 2022-05-11
 
---- a/src/daemon/cgrulesengd.c
-+++ b/src/daemon/cgrulesengd.c
-@@ -31,6 +31,10 @@
+Index: libcgroup/src/daemon/cgrulesengd.c
+===================================================================
+--- libcgroup.orig/src/daemon/cgrulesengd.c
++++ libcgroup/src/daemon/cgrulesengd.c
+@@ -24,6 +24,10 @@
   * TODO Stop using netlink for communication (or at least rewrite that part).
   */
  
@@ -24,21 +26,23 @@ Last-Update: 2019-02-22
 +#define _GNU_SOURCE
 +#endif
 +
- #include "libcgroup.h"
- #include "cgrulesengd.h"
  #include "../libcgroup-internal.h"
---- a/src/daemon/cgrulesengd.h
-+++ b/src/daemon/cgrulesengd.h
-@@ -15,8 +15,6 @@
+ #include "../tools/tools-common.h"
+ #include "cgrulesengd.h"
+Index: libcgroup/src/daemon/cgrulesengd.h
+===================================================================
+--- libcgroup.orig/src/daemon/cgrulesengd.h
++++ libcgroup/src/daemon/cgrulesengd.h
+@@ -8,8 +8,6 @@
  #ifndef _CGRULESENGD_H
  #define _CGRULESENGD_H
  
 -#include <features.h>
 -
- __BEGIN_DECLS
- 
- #include "config.h"
-@@ -24,14 +22,6 @@ __BEGIN_DECLS
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+@@ -20,14 +18,6 @@ extern "C" {
  #include <linux/connector.h>
  #include <linux/cn_proc.h>
  
@@ -51,5 +55,5 @@ Last-Update: 2019-02-22
 -#endif
 -
  /* The following ten macros are all for the Netlink code. */
- #define SEND_MESSAGE_LEN (NLMSG_LENGTH(sizeof(struct cn_msg) + \
- 	sizeof(enum proc_cn_mcast_op)))
+ #define SEND_MESSAGE_LEN (NLMSG_LENGTH(sizeof(struct cn_msg) + sizeof(enum proc_cn_mcast_op)))
+ #define RECV_MESSAGE_LEN (NLMSG_LENGTH(sizeof(struct cn_msg) + sizeof(struct proc_event)))

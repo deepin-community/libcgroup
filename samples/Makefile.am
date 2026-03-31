@@ -1,2 +1,2 @@
-EXTRA_DIST = cgconfig.conf cgred.conf cgrules.conf cgconfig.sysconfig \
-             cgsnapshot_blacklist.conf
+DIST_SUBDIRS = config c python cmdline
+SUBDIRS = $(DIST_SUBDIRS)

@@ -1,3 +1,96 @@
+libcgroup (3.2.0-1) unstable; urgency=medium
+
+  [ Dylan Aïssi ]
+  * Fix copyright holders of Debian patches
+
+  [ Santiago Ruano Rincón ]
+  * Update upstream signing key
+  * New upstream version 3.2.0
+  * Bump Standards-Version to 4.7.3 and remove Priority field
+  * Update and refresh d/patches/*
+  * Simplify d/salsa-ci.yml and disable the not needed test-build-all job
+  * Update debian/libcgroup3.symbols
+
+ -- Santiago Ruano Rincón <santiagorr@riseup.net>  Fri, 27 Feb 2026 05:17:30 -0300
+
+libcgroup (3.1.0-2) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Use secure URI in Homepage field.
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository-Browse.
+
+  * Trying to correctly acknowledge 2.0.2-2.1 NMU. Wrongly missed those
+    changes in the previous update.
+
+ -- Santiago Ruano Rincón <santiagorr@riseup.net>  Fri, 21 Jun 2024 14:17:09 -0300
+
+libcgroup (3.1.0-1) unstable; urgency=medium
+
+  * Upload to unstable
+
+ -- Santiago Ruano Rincón <santiagorr@riseup.net>  Fri, 21 Jun 2024 08:27:01 -0300
+
+libcgroup (3.1.0-1~exp1) experimental; urgency=medium
+
+  * New upstream version 3.1.0 (Closes: #1060375)
+  * Fix debian/watch
+  * Update my email address
+  * Add build-dep on libsystemd-dev
+  * Update debian/cgroup-tools.examples to match modifications in file names
+  * Update debian/patches/Syntax-fixes-for-man-pages.patch
+  * Change compression algorithm in debian/gbp.conf to match the upstream's
+  * Update debian/libcgroup3.symbols
+
+ -- Santiago Ruano Rincón <santiagorr@riseup.net>  Tue, 18 Jun 2024 23:05:38 -0300
+
+libcgroup (3.0.0-1) experimental; urgency=medium
+
+  * New upstream version 3.0.0
+  * Update/refresh:
+    - cgroup-directory.patch
+    - initscript-exit.patch
+    - Syntax-fixes-for-man-pages.patch
+    - pam_cgroup-Revert-broken-cache-usage.patch
+    - cgrulesengd-_GNU_SOURCE.patch
+  * Remove initscript-return.patch
+  * Update debian/cgroup-tools.examples
+  * Bump SONAME: libgroup3
+
+ -- Santiago Ruano Rincón <santiago.ruano-rincon@imt-atlantique.fr>  Mon, 19 Sep 2022 16:07:22 +0200
+
+libcgroup (2.0.2-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+
+  [ Michael Biebl ]
+  * Move PAM module and library to /usr. (Closes: #1061491)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 30 May 2024 19:52:18 +0200
+
+libcgroup (2.0.2-2) unstable; urgency=medium
+
+  * Upload to unstable
+
+ -- Santiago Ruano Rincón <santiago.ruano-rincon@imt-atlantique.fr>  Mon, 25 Jul 2022 17:16:51 +0200
+
+libcgroup (2.0.2-1) experimental; urgency=medium
+
+  * New upstream version 2.0.2
+
+ -- Santiago Ruano Rincón <santiago.ruano-rincon@imt-atlantique.fr>  Wed, 18 May 2022 11:19:48 +0200
+
+libcgroup (2.0.1-1) experimental; urgency=medium
+
+  * Fix src/paches.{c,h} and debian/patches/* copyright information
+    (Closes: #996884)
+  * New upstream version 2.0.1
+  * Update d/patches/cgrulesengd-_GNU_SOURCE.patch
+  * Update d/rules: no need anymore to rename pam_cgroup.so file
+  * Bump SONAME: libcgroup2
+  * Bump Standards-Version to 4.6.1.0. No changes needed
+
+ -- Santiago Ruano Rincón <santiago.ruano-rincon@imt-atlantique.fr>  Thu, 12 May 2022 22:57:25 +0200
+
 libcgroup (2.0-2) unstable; urgency=low
 
   * Upload to unstable

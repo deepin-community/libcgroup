@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LGPL-2.1-only
 #
 # Utility functions for the libcgroup functional tests
 #
@@ -5,86 +6,102 @@
 # Author: Tom Hromatka <tom.hromatka@oracle.com>
 #
 
-#
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of version 2.1 of the GNU Lesser General Public License as
-# published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this library; if not, see <http://www.gnu.org/licenses>.
-#
-
-import grp
-import os
 from run import Run
+import platform
+
 
 # function to indent a block of text by cnt number of spaces
 def indent(in_str, cnt):
     leading_indent = cnt * ' '
     return ''.join(leading_indent + line for line in in_str.splitlines(True))
 
+
 def get_file_owner_uid(config, filename):
     cmd = list()
     cmd.append('stat')
     cmd.append('-c')
-    cmd.append('\'%u\'')
+    cmd.append("'%u'")
     cmd.append(filename)
 
     if config.args.container:
-        return config.container.run(cmd, shell_bool=True)
+        return int(config.container.run(cmd, shell_bool=True))
     else:
-        return Run.run(cmd, shell_bool=True)
+        return int(Run.run(cmd, shell_bool=True))
+
 
 def get_file_owner_username(config, filename):
     cmd = list()
     cmd.append('stat')
     cmd.append('-c')
-    cmd.append('\'%U\'')
+    cmd.append("'%U'")
     cmd.append(filename)
 
     if config.args.container:
         return config.container.run(cmd, shell_bool=True)
     else:
         return Run.run(cmd, shell_bool=True)
-    return os.stat(filename).st_uid
+
 
 def get_file_owner_gid(config, filename):
     cmd = list()
     cmd.append('stat')
     cmd.append('-c')
-    cmd.append('\'%g\'')
+    cmd.append("'%g'")
     cmd.append(filename)
 
     if config.args.container:
-        return config.container.run(cmd, shell_bool=True)
+        return int(config.container.run(cmd, shell_bool=True))
     else:
-        return Run.run(cmd, shell_bool=True)
+        return int(Run.run(cmd, shell_bool=True))
+
 
 def get_file_owner_group_name(config, filename):
     cmd = list()
     cmd.append('stat')
     cmd.append('-c')
-    cmd.append('\'%G\'')
+    cmd.append("'%G'")
     cmd.append(filename)
 
     if config.args.container:
         return config.container.run(cmd, shell_bool=True)
     else:
         return Run.run(cmd, shell_bool=True)
+
 
 def get_file_permissions(config, filename):
     cmd = list()
     cmd.append('stat')
     cmd.append('-c')
-    cmd.append('\'%a\'')
+    cmd.append("'%a'")
     cmd.append(filename)
 
     if config.args.container:
         return config.container.run(cmd, shell_bool=True)
     else:
         return Run.run(cmd, shell_bool=True)
+
+
+# get the current kernel version
+def get_kernel_version(config):
+    kernel_version_str = str(platform.release())
+    kernel_version = kernel_version_str.split('.')[0:3]
+    return kernel_version
+
+
+# match if both outputs are same
+def is_output_same(config, out, expected_out):
+    result = True
+    cause = None
+
+    for line_num, line in enumerate(out.splitlines()):
+        if line.strip() != expected_out.splitlines()[line_num].strip():
+            cause = (
+                    'Expected line:\n\t{}\nbut received line:\n\t{}'
+                    ''.format(expected_out.splitlines()[line_num].strip(), line.strip())
+                    )
+            result = False
+
+    return result, cause
+
+
+# vim: set et ts=4 sw=4:

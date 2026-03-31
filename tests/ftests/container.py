@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LGPL-2.1-only
 #
 # Container class for the libcgroup functional tests
 #
@@ -5,25 +6,14 @@
 # Author: Tom Hromatka <tom.hromatka@oracle.com>
 #
 
-#
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of version 2.1 of the GNU Lesser General Public License as
-# published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this library; if not, see <http://www.gnu.org/licenses>.
-#
-
-import consts
-import getpass
+from run import Run, RunError
+from queue import Queue
+import threading as tp
 from log import Log
+import consts
+import time
 import os
-from run import Run
+
 
 class Container(object):
     def __init__(self, name, stop_timeout=None, arch=None, cfg_path=None,
@@ -56,25 +46,23 @@ class Container(object):
         # save off the path to the libcgroup source code
         self.libcg_dir = os.path.dirname(tests_dir)
 
-
     def __str__(self):
-        out_str = "Container {}".format(self.name)
-        out_str += "\n\tdistro = {}".format(self.distro)
-        out_str += "\n\trelease = {}".format(self.release)
-        out_str += "\n\tarch = {}".format(self.arch)
-        out_str += "\n\tstop_timeout = {}\n".format(self.stop_timeout)
+        out_str = 'Container {}'.format(self.name)
+        out_str += '\n\tdistro = {}'.format(self.distro)
+        out_str += '\n\trelease = {}'.format(self.release)
+        out_str += '\n\tarch = {}'.format(self.arch)
+        out_str += '\n\tstop_timeout = {}\n'.format(self.stop_timeout)
 
         return out_str
 
     # configure the container to meet our needs
     def config(self):
-        ftest_dir = os.path.dirname(os.path.abspath(__file__))
-        tests_dir = os.path.dirname(ftest_dir)
-        libcg_dir = os.path.dirname(tests_dir)
-
         # map our UID and GID to the same UID/GID in the container
-        cmd = 'printf "uid {} 1000\ngid {} 1000" | sudo lxc config set {} raw.idmap -'.format(
-              os.getuid(), os.getgid(), self.name)
+        cmd = (
+                    'printf "uid {} 1000\ngid {} 1000" | sudo lxc config set '
+                    '{} raw.idmap -'
+                    ''.format(os.getuid(), os.getgid(), self.name)
+              )
         Run.run(cmd, shell_bool=True)
 
         # add the libcgroup root directory (where we did the build) into
@@ -87,7 +75,7 @@ class Container(object):
         cmd2.append('device')
         cmd2.append('add')
         cmd2.append(self.name)
-        cmd2.append('libcgsrc') # arbitrary name of device
+        cmd2.append('libcgsrc')  # arbitrary name of device
         cmd2.append('disk')
         # to appease gcov, mount the libcgroup source at the same path as we
         # built it.  This can be worked around someday by using
@@ -98,7 +86,7 @@ class Container(object):
 
         return Run.run(cmd2)
 
-    def create(self):
+    def _init_container(self, q):
         cmd = list()
 
         if self.privileged:
@@ -111,7 +99,49 @@ class Container(object):
 
         cmd.append(self.name)
 
-        return Run.run(cmd)
+        try:
+            Run.run(cmd)
+            q.put(True)
+        except RunError as re:
+            if re.stderr.find('Instance is busy running a "create" operation') >= 0:
+                q.put(True)
+        except Exception:  # noqa: E722
+            q.put(False)
+        except BaseException:  # noqa: E722
+            q.put(False)
+
+    def create(self):
+        # Github Actions sometimes has timeout issues with the LXC sockets.
+        # Try this command multiple times in an attempt to work around this
+        # limitation
+
+        queue = Queue()
+        sleep_time = 5
+        ret = False
+
+        for i in range(5):
+            thread = tp.Thread(target=self._init_container, args=(queue, ))
+            thread.start()
+
+            time_cnt = 0
+            while thread.is_alive():
+                time.sleep(sleep_time)
+                time_cnt += sleep_time
+                Log.log_debug('Waiting... {}'.format(time_cnt))
+
+            ret = queue.get()
+            if ret:
+                break
+            else:
+                try:
+                    self.delete()
+                except RunError:
+                    pass
+
+            thread.join()
+
+        if not ret:
+            raise ContainerError('Failed to create the container')
 
     def delete(self):
         cmd = list()
@@ -182,10 +212,13 @@ class Container(object):
 
         return Run.run(cmd)
 
+
 class ContainerError(Exception):
-    def __init__(self, message, ret):
-        super(RunError, self).__init__(message)
+    def __init__(self, message):
+        super(ContainerError, self).__init__(message)
 
     def __str__(self):
-        out_str = "ContainerError:\n\tmessage = {}".format(self.message)
+        out_str = 'ContainerError:\n\tmessage = {}'.format(self.message)
         return out_str
+
+# vim: set et ts=4 sw=4:

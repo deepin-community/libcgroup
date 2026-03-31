@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: LGPL-2.1-only */
 /**
  * libcgroup googletest for cgroup_build_tasks_procs_path()
  *
@@ -5,23 +6,12 @@
  * Author: Tom Hromatka <tom.hromatka@oracle.com>
  */
 
-/*
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of version 2.1 of the GNU Lesser General Public License as
- * published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, see <http://www.gnu.org/licenses>.
- */
-
 #include "gtest/gtest.h"
 
 #include "libcgroup-internal.h"
+
+char * const NAMESPACE1 = "ns1";
+char * const NAMESPACE4 = "ns4";
 
 class BuildTasksProcPathTest : public ::testing::Test {
 	protected:
@@ -46,32 +36,27 @@ class BuildTasksProcPathTest : public ::testing::Test {
 	 * Note that controllers 1 and 4 are also given namespaces
 	 */
 	void SetUp() override {
-		char NAMESPACE1[] = "ns1";
-		char NAMESPACE4[] = "ns4";
 		const int ENTRY_CNT = 6;
 		int i, ret;
 
 		memset(&cg_mount_table, 0, sizeof(cg_mount_table));
-		memset(cg_namespace_table, 0,
-			CG_CONTROLLER_MAX * sizeof(cg_namespace_table[0]));
+		memset(cg_namespace_table, 0, CG_CONTROLLER_MAX * sizeof(cg_namespace_table[0]));
 
 		// Populate the mount table
 		for (i = 0; i < ENTRY_CNT; i++) {
-			snprintf(cg_mount_table[i].name, FILENAME_MAX,
-				 "controller%d", i);
+			snprintf(cg_mount_table[i].name, CONTROL_NAMELEN_MAX, "controller%d", i);
 			cg_mount_table[i].index = i;
 
 			ret = snprintf(cg_mount_table[i].mount.path, FILENAME_MAX,
 				 "/sys/fs/cgroup/%s", cg_mount_table[i].name);
-			ASSERT_LT(ret, sizeof(cg_mount_table[i].mount.path));
+			ASSERT_LT(ret, (int)sizeof(cg_mount_table[i].mount.path));
 
 			cg_mount_table[i].mount.next = NULL;
 
 			if (i == 0)
 				cg_mount_table[i].version = CGROUP_UNK;
 			else
-				cg_mount_table[i].version =
-					(cg_version_t)((i % 2) + 1);
+				cg_mount_table[i].version = (cg_version_t)((i % 2) + 1);
 		}
 
 		// Give a couple of the entries a namespace as well
@@ -83,12 +68,11 @@ class BuildTasksProcPathTest : public ::testing::Test {
 TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_ControllerNotFound)
 {
 	char ctrlname[] = "InvalidCtrlr";
+	char cgrp_name[] = "foo";
 	char path[FILENAME_MAX];
-	char cgname[] = "foo";
 	int ret;
 
-	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgname,
-					    ctrlname);
+	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgrp_name, ctrlname);
 	ASSERT_EQ(ret, ECGOTHER);
 	ASSERT_STREQ(path, "\0");
 }
@@ -96,12 +80,11 @@ TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_ControllerNotFound)
 TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_UnknownCgVersion)
 {
 	char ctrlname[] = "controller0";
+	char cgrp_name[] = "bar";
 	char path[FILENAME_MAX];
-	char cgname[] = "bar";
 	int ret;
 
-	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgname,
-					    ctrlname);
+	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgrp_name, ctrlname);
 	ASSERT_EQ(ret, ECGOTHER);
 	ASSERT_STREQ(path, "\0");
 }
@@ -109,11 +92,11 @@ TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_UnknownCgVersion)
 TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_CgV1)
 {
 	char ctrlname[] = "controller2";
+	char cgrp_name[] = "Container7";
 	char path[FILENAME_MAX];
-	char cgname[] = "Container7";
 	int ret;
 
-	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgname,
+	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgrp_name,
 					    ctrlname);
 	ASSERT_EQ(ret, 0);
 	ASSERT_STREQ(path, "/sys/fs/cgroup/controller2/Container7/tasks");
@@ -122,12 +105,11 @@ TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_CgV1)
 TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_CgV2)
 {
 	char ctrlname[] = "controller3";
-	struct cgroup_controller ctrlr = {0};
+	char cgrp_name[] = "tomcat";
 	char path[FILENAME_MAX];
-	char cgname[] = "tomcat";
 	int ret;
 
-	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgname,
+	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgrp_name,
 					    ctrlname);
 	ASSERT_EQ(ret, 0);
 	ASSERT_STREQ(path, "/sys/fs/cgroup/controller3/tomcat/cgroup.procs");
@@ -136,12 +118,11 @@ TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_CgV2)
 TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_CgV1WithNs)
 {
 	char ctrlname[] = "controller4";
-	struct cgroup_controller ctrlr = {0};
+	char cgrp_name[] = "database12";
 	char path[FILENAME_MAX];
-	char cgname[] = "database12";
 	int ret;
 
-	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgname,
+	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgrp_name,
 					    ctrlname);
 	ASSERT_EQ(ret, 0);
 	ASSERT_STREQ(path, "/sys/fs/cgroup/controller4/ns4/database12/tasks");
@@ -150,12 +131,11 @@ TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_CgV1WithNs)
 TEST_F(BuildTasksProcPathTest, BuildTasksProcPathTest_CgV2WithNs)
 {
 	char ctrlname[] = "controller1";
-	struct cgroup_controller ctrlr = {0};
+	char cgrp_name[] = "server";
 	char path[FILENAME_MAX];
-	char cgname[] = "server";
 	int ret;
 
-	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgname,
+	ret = cgroup_build_tasks_procs_path(path, sizeof(path), cgrp_name,
 					    ctrlname);
 	ASSERT_EQ(ret, 0);
 	ASSERT_STREQ(path, "/sys/fs/cgroup/controller1/ns1/server/cgroup.procs");

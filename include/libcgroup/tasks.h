@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: LGPL-2.1-only */
 #ifndef _LIBCGROUP_TASKS_H
 #define _LIBCGROUP_TASKS_H
 
@@ -12,7 +13,9 @@
 #include <stdbool.h>
 #endif
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Flags for cgroup_change_cgroup_uid_gid(). */
 enum cgflags {
@@ -44,16 +47,16 @@ enum cgroup_daemon_type {
 
 /**
  * Move current task (=thread) to given control group.
- * @param cgroup Destination control group.
+ * @param cgrp Destination control group.
  */
-int cgroup_attach_task(struct cgroup *cgroup);
+int cgroup_attach_task(struct cgroup *cgrp);
 
 /**
- * Move given task (=thread) to to given control group.
- * @param cgroup Destination control group.
+ * Move given task (=thread) to given control group.
+ * @param cgrp Destination control group.
  * @param tid The task to move.
  */
-int cgroup_attach_task_pid(struct cgroup *cgroup, pid_t tid);
+int cgroup_attach_task_pid(struct cgroup *cgrp, pid_t tid);
 
 /**
  * Changes the cgroup of a task based on the path provided.  In this case,
@@ -66,19 +69,17 @@ int cgroup_attach_task_pid(struct cgroup *cgroup, pid_t tid);
  *
  * @todo should this function be really public?
  */
-int cgroup_change_cgroup_path(const char *path, pid_t pid,
-		const char * const controllers[]);
+int cgroup_change_cgroup_path(const char *path, pid_t pid, const char * const controllers[]);
 
 /**
  * Get the current control group path where the given task is.
  * @param pid The task to find.
  * @param controller The controller (hierarchy), where to find the task.
  * @param current_path The path to control group, where the task has been found.
- * 	The patch is relative to the root of the hierarchy. The caller must
- * 	free this memory.
+ *	The patch is relative to the root of the hierarchy. The caller must
+ *	free this memory.
  */
-int cgroup_get_current_controller_path(pid_t pid, const char *controller,
-					char **current_path);
+int cgroup_get_current_controller_path(pid_t pid, const char *controller, char **current_path);
 
 /**
  * @}
@@ -138,7 +139,7 @@ int cgroup_change_all_cgroups(void);
  * the configuration file each time it is called.
  *
  * The flags can alter the behavior of this function:
- * 	CGFLAG_USECACHE: Use cached rules instead of parsing the config file
+ *	CGFLAG_USECACHE: Use cached rules instead of parsing the config file
  *      CGFLAG_USE_TEMPLATE_CACHE: Use cached templates instead of
  * parsing the config file
  *
@@ -150,8 +151,7 @@ int cgroup_change_all_cgroups(void);
  * @param flags Bit flags to change the behavior, as defined in enum #cgflags.
  * @todo Determine thread-safeness and fix of not safe.
  */
-int cgroup_change_cgroup_flags(uid_t uid, gid_t gid,
-		const char *procname, pid_t pid, int flags);
+int cgroup_change_cgroup_flags(uid_t uid, gid_t gid, const char *procname, pid_t pid, int flags);
 
 /**
  * Changes the cgroup of a program based on the rules in the config file.  If a
@@ -166,8 +166,7 @@ int cgroup_change_cgroup_flags(uid_t uid, gid_t gid,
  * @param flags Bit flags to change the behavior, as defined in enum #cgflags.
  * @todo Determine thread-safeness and fix if not safe.
  */
-int cgroup_change_cgroup_uid_gid_flags(uid_t uid, gid_t gid,
-				pid_t pid, int flags);
+int cgroup_change_cgroup_uid_gid_flags(uid_t uid, gid_t gid, pid_t pid, int flags);
 
 /**
  * Provides backwards-compatibility with older versions of the API.  This
@@ -196,14 +195,23 @@ int cgroup_change_cgroup_uid_gid(uid_t uid, gid_t gid, pid_t pid);
  * If the daemon does not work, this function returns 0 as success.
  * @param pid The task id.
  * @param flags Bit flags to change the behavior, as defined in
- * 	#cgroup_daemon_type
+ *	#cgroup_daemon_type
  */
 int cgroup_register_unchanged_process(pid_t pid, int flags);
+
+/**
+ * Move given threads (=thread) to given control group.
+ * @param cgroup Destination control group.
+ * @param tid The task to move.
+ */
+int cgroup_attach_thread_tid(struct cgroup *cgroup, pid_t tid);
 
 /**
  * @}
  * @}
  */
-__END_DECLS
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* _LIBCGROUP_TASKS_H */

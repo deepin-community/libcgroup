@@ -1,10 +1,10 @@
-%define soversion 1.0.42
-%define soversion_major 1
+%define soversion 3.2.0
+%define soversion_major 3
 
 Name: libcgroup
 Summary: Tools and libraries to control and monitor control groups
 Group: System Environment/Libraries
-Version: 2.0
+Version: 3.2.0
 Release:        1%{?dist}
 License: LGPLv2+
 URL: http://libcg.sourceforge.net/
@@ -56,11 +56,11 @@ make DESTDIR=$RPM_BUILD_ROOT install
 
 # install config files
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
-cp samples/cgred.conf $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/cgred.conf
-cp samples/cgconfig.sysconfig $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/cgconfig
-cp samples/cgconfig.conf $RPM_BUILD_ROOT/%{_sysconfdir}/cgconfig.conf
-cp samples/cgrules.conf $RPM_BUILD_ROOT/%{_sysconfdir}/cgrules.conf
-cp samples/cgsnapshot_blacklist.conf $RPM_BUILD_ROOT/%{_sysconfdir}/cgsnapshot_blacklist.conf
+cp samples/config/cgred.conf $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/cgred.conf
+cp samples/config/cgconfig.sysconfig $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/cgconfig
+cp samples/config/cgconfig.conf $RPM_BUILD_ROOT/%{_sysconfdir}/cgconfig.conf
+cp samples/config/cgrules.conf $RPM_BUILD_ROOT/%{_sysconfdir}/cgrules.conf
+cp samples/config/cgsnapshot_blacklist.conf $RPM_BUILD_ROOT/%{_sysconfdir}/cgsnapshot_blacklist.conf
 
 # sanitize pam module, we need only pam_cgroup.so
 mv -f $RPM_BUILD_ROOT/%{_lib}/security/pam_cgroup.so.*.*.* $RPM_BUILD_ROOT/%{_lib}/security/pam_cgroup.so
@@ -95,7 +95,7 @@ fi
 
 %postun -p /sbin/ldconfig
 
-%files 
+%files
 %defattr(-,root,root,-)
 %config(noreplace) %{_sysconfdir}/sysconfig/cgred.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/cgconfig
@@ -113,7 +113,6 @@ fi
 /bin/lssubsys
 /sbin/cgconfigparser
 /sbin/cgrulesengd
-/sbin/cgclear
 /bin/cgsnapshot
 %attr(0644, root, root) %{_mandir}/man1/*
 %attr(0644, root, root) %{_mandir}/man5/*
@@ -134,7 +133,7 @@ fi
 %{_includedir}/libcgroup/*.h
 %{_libdir}/libcgroup.*
 /%{_libdir}/pkgconfig/libcgroup.pc
-%doc COPYING INSTALL 
+%doc COPYING INSTALL
 
 
 %changelog

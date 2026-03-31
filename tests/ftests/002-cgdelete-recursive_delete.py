@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LGPL-2.1-only
 #
 # Cgroup recursive cgdelete functionality test
 #
@@ -6,35 +7,32 @@
 # Author: Tom Hromatka <tom.hromatka@oracle.com>
 #
 
-#
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of version 2.1 of the GNU Lesser General Public License as
-# published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this library; if not, see <http://www.gnu.org/licenses>.
-#
-
 from cgroup import Cgroup, CgroupVersion
+from libcgroup import Mode
 import consts
 import ftests
-import os
-from process import Process
 import sys
+import os
 
 CONTROLLER = 'cpuset'
 PARENT = '002cgdelete'
 CHILD = 'childcg'
 GRANDCHILD = 'grandchildcg'
 
+
 def prereqs(config):
-    # This test should run on both cgroup v1 and v2
-    return consts.TEST_PASSED, None
+    result = consts.TEST_PASSED
+    cause = None
+
+    # This test has shown inconsistent failures on underpowered legacy
+    # machines when run within a container.  Skip that configuration
+    if Cgroup.get_cgroup_mode(config) == Mode.CGROUP_MODE_LEGACY and \
+       config.args.container:
+        result = consts.TEST_SKIPPED
+        cause = 'Skip this test in containerized legacy hierarchies'
+
+    return result, cause
+
 
 def setup(config):
     Cgroup.create(config, CONTROLLER, PARENT)
@@ -49,16 +47,20 @@ def setup(config):
         # Moving a process from a child cgroup to its parent isn't (easily)
         # supported in cgroup v2 because of cgroup v2's restriction that
         # processes only be located in leaf cgroups
+        grandchild_cgrp_path = os.path.join(PARENT, CHILD, GRANDCHILD)
         config.process.create_process_in_cgroup(config, CONTROLLER,
-                                         os.path.join(PARENT, CHILD, GRANDCHILD))
+                                                grandchild_cgrp_path)
+
 
 def test(config):
     Cgroup.delete(config, CONTROLLER, PARENT, recursive=True)
 
     return consts.TEST_PASSED, None
 
+
 def teardown(config):
     pass
+
 
 def main(config):
     [result, cause] = prereqs(config)
@@ -71,8 +73,11 @@ def main(config):
 
     return [result, cause]
 
+
 if __name__ == '__main__':
     config = ftests.parse_args()
     # this test was invoked directly.  run only it
     config.args.num = int(os.path.basename(__file__).split('-')[0])
     sys.exit(ftests.main(config))
+
+# vim: set et ts=4 sw=4:

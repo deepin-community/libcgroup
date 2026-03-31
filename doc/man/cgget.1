@@ -7,10 +7,10 @@
 cgget \- print parameter(s) of given group(s)
 
 .SH SYNOPSIS
-\fBcgget\fR [\fB-n\fR] [\fB-v\fR] [\fB-r\fR <\fIname\fR>]
+\fBcgget\fR [\fB-n\fR] [\fB-v\fR] [\fB-m\fR] [\fB-b\fR] [\fB-r\fR <\fIname\fR>]
 [\fB-g\fR <\fIcontroller\fR>] [\fB-a\fR] <\fBpath\fR> ...
 .br
-\fBcgget\fR [\fB-n\fR] [\fB-v\fR] [\fB-r\fR <\fIname\fR>]
+\fBcgget\fR [\fB-n\fR] [\fB-v\fR] [\fB-m\fR] [\fB-b\fR] [\fB-r\fR <\fIname\fR>]
 \fB-g\fR <\fIcontroller\fR>:<\fBpath\fR> ...
 
 .SH DESCRIPTION
@@ -28,6 +28,17 @@ This parameter can be used multiple times.
 print the variables for all controllers which consist in the  given cgroup
 
 .TP
+.B -b
+ignores the default systemd delegated hierarchy path and
+constructs the path of the control groups relative to the
+cgroup root hierarchy.
+
+.TP
+.B -c
+displays the controllers and their versions.
+This option can be used along with -m option.
+
+.TP
 .B -g <controller>
 defines controllers whose values should be displayed.
 This option can be used multiple times.
@@ -40,6 +51,11 @@ This option can be used multiple times.
 .TP
 .B -h, --help
 display help and exit
+
+.TP
+.B -m
+displays the current control groups setup mode. The control groups can be set up in one of three modes,
+legacy (cgroup v1 only), unified (cgroup v2 only) or hybrid (cgroup v1/v2).
 
 .TP
 .B -n
@@ -82,6 +98,9 @@ $ cgget -n -g cpu /
 cpu.rt_period_us=1000000
 cpu.rt_runtime_us=950000
 cpu.shares=1024
+
+$ cgget -m
+Unified Mode (Cgroup v2 only).
 
 .fi
 

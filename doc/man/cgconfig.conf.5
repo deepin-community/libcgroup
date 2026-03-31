@@ -39,7 +39,7 @@ mount {
 .TP
 .B controller
 Name of the kernel subsystem. The list of subsystems supported by the kernel
-can be found in 
+can be found in
 .I /proc/cgroups
 file. Named hierarchy can be specified as controller
 \fB"name=<somename>"\fR. Do not forget to use double quotes around
@@ -92,9 +92,9 @@ group <name> {
 .TP
 .B name
 Name of the control group. It can contain only characters, which are
-allowed for directory names. 
+allowed for directory names.
 The groups form a tree, i.e. a control group can contain zero or more
-subgroups. Subgroups can be specified using '/' delimiter. 
+subgroups. Subgroups can be specified using '/' delimiter.
 
 The root control group is always created automatically in all hierarchies
 and it is the base of the group hierarchy. It can be explicitly specified in
@@ -253,6 +253,53 @@ Templates does not use
 .B default
 section settings.
 
+.I systemd
+section has this form (supported on cgroup v2):
+.RS
+.nf
+.ft B
+.sp
+systemd {
+.RS
+.ft B
+slice = <slice-name.slice>;
+scope = <scope-name.scope>;
+setdefault = <yes>;
+pid = <pid>;
+.ft B
+.RE
+}
+.fi
+.RE
+.ft
+
+.TP
+.B slice
+The name of the systemd slice unit, should end with '.slice'  and obey the rules set forth by systemd slice unit. The slice unit is created, if it doesn't exist.  This configuration requires
+.B 'scope=<scope-name.scope>'.
+The term  'unit'  and 'cgroup' is used interchangeably.
+
+.TP
+.B scope
+The name of the systemd scope unit should end with '.scope'  and obey the rules set forth by systemd transient scope unit. This configuration requires
+.B 'slice=<slice-name.scope>'
+
+.TP
+.B setdefault
+Set the scope as the default libcgroup scope. This default scope is used by libcgroup tools to build up the cgroup path.
+
+.TP
+.B pid
+Moves the provided pid into the <slice-name.slice>/<scope-name.scope>. Without this configuration, libcgroup will create and attach a default idle program
+.B 'libcgroup_systemd_idle_thread'
+required by a systemd transient scope unit. The
+.B 'scope-name.scope'
+is automatically removed by systemd when the last task in the cgroup exits, but the
+.B 'slice-name.slice'
+will exist until manually removed.
+
+.LP
+
 .I /etc/cgconfig.d/
 directory can be used for additional configuration files. cgrulesengd searches this directory for additional templates.
 
@@ -267,8 +314,8 @@ The configuration file:
 .nf
 mount {
 .RS
-cpu = /mnt/cgroups/cpu;
-cpuacct = /mnt/cgroups/cpu;
+cpu = /sys/fs/cgroup/cpu;
+cpuacct = /sys/fs/cgroup/cpu;
 .RE
 }
 .fi
@@ -279,8 +326,8 @@ inside. It corresponds to the following operations:
 .LP
 .RS
 .nf
-mkdir /mnt/cgroups/cpu
-mount -t cgroup -o cpu,cpuacct cpu /mnt/cgroups/cpu
+mkdir /sys/fs/cgroup/cpu
+mount -t cgroup -o cpu,cpuacct cpu /sys/fs/cgroup/cpu
 .fi
 .RE
 
@@ -292,9 +339,9 @@ The configuration file:
 .nf
 mount {
 .RS
-cpu = /mnt/cgroups/cpu;
-"name=scheduler" = /mnt/cgroups/cpu;
-"name=noctrl" = /mnt/cgroups/noctrl;
+cpu = /sys/fs/cgroup/cpu;
+"name=scheduler" = /sys/fs/cgroup/cpu;
+"name=noctrl" = /sys/fs/cgroup/noctrl;
 .RE
 }
 
@@ -322,14 +369,14 @@ following operations:
 .LP
 .RS
 .nf
-mkdir /mnt/cgroups/cpu
-mount -t cgroup -o cpu,name=scheduler cpu /mnt/cgroups/cpu
-mount -t cgroup -o none,name=noctrl none /mnt/cgroups/noctrl
+mkdir /sys/fs/cgroup/cpu
+mount -t cgroup -o cpu,name=scheduler cpu /sys/fs/cgroup/cpu
+mount -t cgroup -o none,name=noctrl none /sys/fs/cgroup/noctrl
 
-mkdir /mnt/cgroups/cpu/daemons
-echo 1000 > /mnt/cgroups/cpu/daemons/www/cpu.shares
+mkdir /sys/fs/cgroup/cpu/daemons
+echo 1000 > /sys/fs/cgroup/cpu/daemons/www/cpu.shares
 
-mkdir /mnt/cgroups/noctrl/tests
+mkdir /sys/fs/cgroup/noctrl/tests
 .fi
 .RE
 
@@ -359,8 +406,8 @@ The configuration file:
 .nf
 mount {
 .RS
-cpu = /mnt/cgroups/cpu;
-cpuacct = /mnt/cgroups/cpu;
+cpu = /sys/fs/cgroup/cpu;
+cpuacct = /sys/fs/cgroup/cpu;
 .RE
 }
 
@@ -431,18 +478,18 @@ which are little bit trickier to emulate via chmod):
 .LP
 .RS
 .nf
-mkdir /mnt/cgroups/cpu
-mount -t cgroup -o cpu,cpuacct cpu /mnt/cgroups/cpu
+mkdir /sys/fs/cgroup/cpu
+mount -t cgroup -o cpu,cpuacct cpu /sys/fs/cgroup/cpu
 
-mkdir /mnt/cgroups/cpu/daemons
+mkdir /sys/fs/cgroup/cpu/daemons
 
-mkdir /mnt/cgroups/cpu/daemons/www
-chown root:root /mnt/cgroups/cpu/daemons/www/*
-chown root:webmaster /mnt/cgroups/cpu/daemons/www/tasks
-echo 1000 > /mnt/cgroups/cpu/daemons/www/cpu.shares
+mkdir /sys/fs/cgroup/cpu/daemons/www
+chown root:root /sys/fs/cgroup/cpu/daemons/www/*
+chown root:webmaster /sys/fs/cgroup/cpu/daemons/www/tasks
+echo 1000 > /sys/fs/cgroup/cpu/daemons/www/cpu.shares
 
  # + chmod the files so the result looks like:
- # ls -la /mnt/cgroups/cpu/daemons/www/
+ # ls -la /sys/fs/cgroup/cpu/daemons/www/
  # admin.dperm = 755:
  # drwxr-xr-x. 2 root webmaster 0 Jun 16 11:51 .
  #
@@ -461,13 +508,13 @@ echo 1000 > /mnt/cgroups/cpu/daemons/www/cpu.shares
  # -rw-rw----. 1 root webmaster 0 Jun 16 11:51 tasks
 
 
-mkdir /mnt/cgroups/cpu/daemons/ftp
-chown root:root /mnt/cgroups/cpu/daemons/ftp/*
-chown root:ftpmaster /mnt/cgroups/cpu/daemons/ftp/tasks
-echo 500 > /mnt/cgroups/cpu/daemons/ftp/cpu.shares
+mkdir /sys/fs/cgroup/cpu/daemons/ftp
+chown root:root /sys/fs/cgroup/cpu/daemons/ftp/*
+chown root:ftpmaster /sys/fs/cgroup/cpu/daemons/ftp/tasks
+echo 500 > /sys/fs/cgroup/cpu/daemons/ftp/cpu.shares
 
  # + chmod the files so the result looks like:
- # ls -la /mnt/cgroups/cpu/daemons/ftp/
+ # ls -la /sys/fs/cgroup/cpu/daemons/ftp/
  # admin.dperm = 755:
  # drwxr-xr-x. 2 root ftpmaster 0 Jun 16 11:51 .
  #
@@ -515,8 +562,8 @@ The configuration file:
 .nf
 mount {
 .RS
-cpu = /mnt/cgroups/cpu;
-cpuacct = /mnt/cgroups/cpuacct;
+cpu = /sys/fs/cgroup/cpu;
+cpuacct = /sys/fs/cgroup/cpuacct;
 .RE
 }
 
@@ -535,13 +582,13 @@ It corresponds to the following operations:
 .LP
 .RS
 .nf
-mkdir /mnt/cgroups/cpu
-mkdir /mnt/cgroups/cpuacct
-mount -t cgroup -o cpu cpu /mnt/cgroups/cpu
-mount -t cgroup -o cpuacct cpuacct /mnt/cgroups/cpuacct
+mkdir /sys/fs/cgroup/cpu
+mkdir /sys/fs/cgroup/cpuacct
+mount -t cgroup -o cpu cpu /sys/fs/cgroup/cpu
+mount -t cgroup -o cpuacct cpuacct /sys/fs/cgroup/cpuacct
 
-mkdir /mnt/cgroups/cpu/daemons
-mkdir /mnt/cgroups/cpuacct/daemons
+mkdir /sys/fs/cgroup/cpu/daemons
+mkdir /sys/fs/cgroup/cpuacct/daemons
 .fi
 .RE
 
@@ -562,8 +609,8 @@ The configuration file:
 .nf
 mount {
 .RS
-cpu = /mnt/cgroups/cpu;
-cpuacct = /mnt/cgroups/cpuacct;
+cpu = /sys/fs/cgroup/cpu;
+cpuacct = /sys/fs/cgroup/cpuacct;
 .RE
 }
 
@@ -602,17 +649,17 @@ It corresponds to the following operations:
 .LP
 .RS
 .nf
-mkdir /mnt/cgroups/cpu
-mkdir /mnt/cgroups/cpuacct
-mount -t cgroup -o cpu cpu /mnt/cgroups/cpu
-mount -t cgroup -o cpuacct cpuacct /mnt/cgroups/cpuacct
+mkdir /sys/fs/cgroup/cpu
+mkdir /sys/fs/cgroup/cpuacct
+mount -t cgroup -o cpu cpu /sys/fs/cgroup/cpu
+mount -t cgroup -o cpuacct cpuacct /sys/fs/cgroup/cpuacct
 
-mkdir /mnt/cgroups/cpuacct/daemons
-mkdir /mnt/cgroups/cpu/daemons
-mkdir /mnt/cgroups/cpu/daemons/www
-echo 1000 > /mnt/cgroups/cpu/daemons/www/cpu.shares
-mkdir /mnt/cgroups/cpu/daemons/ftp
-echo 500 > /mnt/cgroups/cpu/daemons/ftp/cpu.shares
+mkdir /sys/fs/cgroup/cpuacct/daemons
+mkdir /sys/fs/cgroup/cpu/daemons
+mkdir /sys/fs/cgroup/cpu/daemons/www
+echo 1000 > /sys/fs/cgroup/cpu/daemons/www/cpu.shares
+mkdir /sys/fs/cgroup/cpu/daemons/ftp
+echo 500 > /sys/fs/cgroup/cpu/daemons/ftp/cpu.shares
 .fi
 .RE
 Group
@@ -643,8 +690,8 @@ The configuration file:
 .nf
 mount {
 .RS
-cpu = /mnt/cgroups/cpu;
-cpuacct = /mnt/cgroups/cpu;
+cpu = /sys/fs/cgroup/cpu;
+cpuacct = /sys/fs/cgroup/cpu;
 .RE
 }
 
@@ -701,15 +748,15 @@ It corresponds to the following operations:
 .LP
 .RS
 .nf
-mkdir /mnt/cgroups/cpu
-mount -t cgroup -o cpu,cpuacct cpu /mnt/cgroups/cpu
+mkdir /sys/fs/cgroup/cpu
+mount -t cgroup -o cpu,cpuacct cpu /sys/fs/cgroup/cpu
 
-chown root:operator /mnt/cgroups/cpu/*
-chown root:operator /mnt/cgroups/cpu/tasks
+chown root:operator /sys/fs/cgroup/cpu/*
+chown root:operator /sys/fs/cgroup/cpu/tasks
 
-mkdir /mnt/cgroups/cpu/daemons
-chown root:operator /mnt/cgroups/cpu/daemons/*
-chown root:daemonmaster /mnt/cgroups/cpu/daemons/tasks
+mkdir /sys/fs/cgroup/cpu/daemons
+chown root:operator /sys/fs/cgroup/cpu/daemons/*
+chown root:daemonmaster /sys/fs/cgroup/cpu/daemons/tasks
 .fi
 .RE
 
@@ -736,8 +783,8 @@ The configuration file:
 .nf
 mount {
 .RS
-cpu = /mnt/cgroups/cpu;
-cpuacct = /mnt/cgroups/cpuacct;
+cpu = /sys/fs/cgroup/cpu;
+cpuacct = /sys/fs/cgroup/cpuacct;
 .RE
 }
 
@@ -759,8 +806,8 @@ cpu {
 .RE
 }
 
-mkdir /mnt/cgroups/cpu/daemons
-mkdir /mnt/cgroups/cpuacct/daemons
+mkdir /sys/fs/cgroup/cpu/daemons
+mkdir /sys/fs/cgroup/cpuacct/daemons
 .fi
 .RE
 
@@ -776,7 +823,7 @@ The configuration file:
 .nf
 mount {
 .RS
-"cpu,nodev,nosuid,noexec" = /mnt/cgroups/cpu;
+"cpu,nodev,nosuid,noexec" = /sys/fs/cgroup/cpu;
 .RE
 }
 
@@ -784,10 +831,30 @@ mount {
 .RE
 
 This is the same as
-mount -t cgroup cgroup -o nodev,nosuid,noexec,cpu /mnt/cgroups/cpu
+mount -t cgroup cgroup -o nodev,nosuid,noexec,cpu /sys/fs/cgroup/cpu
 It mounts the cpu controller with MS_NODEV, MS_NOSUID and MS_NOEXEC
 options passed.
 
+
+.SS Example 9
+.LP
+The configuration file:
+
+.LP
+.RS
+.nf
+systemd {
+.RS
+slice = database.slice;
+scope = db.scope;
+setdefault = yes;
+.RE
+}
+
+.fi
+.RE
+
+This creates a systemd transient scope unit db.scope under the systemd slice unit database.slice and spawns a libcgroup_systemd_idle_thread in the scope cgroup unit. The 'setdefault' configuration appends database.slice/db.scope to the path constructed by libcgroup and its tools.
 
 .SH RECOMMENDATIONS
 .SS Keep hierarchies separated

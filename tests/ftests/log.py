@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LGPL-2.1-only
 #
 # Log class for the libcgroup functional tests
 #
@@ -5,23 +6,8 @@
 # Author: Tom Hromatka <tom.hromatka@oracle.com>
 #
 
-#
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of version 2.1 of the GNU Lesser General Public License as
-# published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this library; if not, see <http://www.gnu.org/licenses>.
-#
-
-import consts
 import datetime
-import log
+import consts
 
 log_level = consts.DEFAULT_LOG_LEVEL
 log_file = consts.DEFAULT_LOG_FILE
@@ -32,25 +18,31 @@ class Log(object):
 
     @staticmethod
     def log(msg, msg_level=consts.DEFAULT_LOG_LEVEL):
+        global log_level, log_file, log_fd
+
         if log_level >= msg_level:
-            if log.log_fd is None:
-                Log.open_logfd(log.log_file)
+            if log_fd is None:
+                Log.open_logfd(log_file)
 
             timestamp = datetime.datetime.now().strftime('%b %d %H:%M:%S')
-            log_fd.write("{}: {}\n".format(timestamp, msg))
+            log_fd.write('{}: {}\n'.format(timestamp, msg))
 
     @staticmethod
     def open_logfd(log_file):
-        log.log_fd = open(log_file, "a")
+        global log_fd
+
+        log_fd = open(log_file, 'a')
 
     @staticmethod
     def log_critical(msg):
-        Log.log("CRITICAL: {}".format(msg), consts.LOG_CRITICAL)
+        Log.log('CRITICAL: {}'.format(msg), consts.LOG_CRITICAL)
 
     @staticmethod
     def log_warning(msg):
-        Log.log("WARNING: {}".format(msg), consts.LOG_WARNING)
+        Log.log('WARNING: {}'.format(msg), consts.LOG_WARNING)
 
     @staticmethod
     def log_debug(msg):
-        Log.log("DEBUG: {}".format(msg), consts.LOG_DEBUG)
+        Log.log('DEBUG: {}'.format(msg), consts.LOG_DEBUG)
+
+# vim: set et ts=4 sw=4:
