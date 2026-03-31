@@ -12,7 +12,14 @@ Files: debian/*
 Copyright: 2009 Jon Bernard <jbernard@debian.org>
            2013-2014 Daniel Baumann <mail@daniel-baumann.ch>
            2014-2016, Christian Kastner <ckk@debian.org>
+           2021-2022, Santiago Ruano Rincón <santiago.ruano-rincon@imt-atlantique.fr>
 License: GPL-3
+
+Files: debian/patches/*
+Copyright: 2013 Daniel Baumann <mail@daniel-baumann.ch>
+           2014-2015 Christian Kastner <ckk@debian.org>
+           2018 James Clarke <jrtc27@debian.org>
+License: LGPL-2.1
 
 Files: googletest/* debian/missing-sources/googletest/*
 Copyright: 2008, Google Inc.
@@ -22,6 +29,10 @@ Files: src/pam/pam_cgroup.c
 Copyright: 1996-1997 Cristian Gafton <gafton@redhat.com>
            2008 Vivek Goyal <vgoyal@redhat.com>
 License: BSD-3-clause or GPL-2, and LGPL-2.1
+
+Files: src/parse.c src/parse.h
+Copyright: 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation, Inc.
+License: GPL-3+
 
 License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without

@@ -1,24 +1,18 @@
-/*
+// SPDX-License-Identifier: LGPL-2.1-only
+/**
  * Copyright Red Hat, Inc. 2012
  *
  * Author:	Jan Safranek <jsafrane@redhat.com>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2.1 of the GNU Lesser General Public License
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 #include <libcgroup.h>
 #include <libcgroup-internal.h>
+
+#include <strings.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <strings.h>
+#include <stdio.h>
 
 static cgroup_logger_callback cgroup_logger;
 static void *cgroup_logger_userdata;
@@ -46,7 +40,7 @@ void cgroup_log(int level, const char *fmt, ...)
 }
 
 void cgroup_set_logger(cgroup_logger_callback logger, int loglevel,
-		void *userdata)
+		       void *userdata)
 {
 	cgroup_logger = logger;
 	cgroup_set_loglevel(loglevel);
@@ -63,6 +57,7 @@ int cgroup_parse_log_level_str(const char *levelstr)
 {
 	char *end;
 	long level;
+
 	errno = 0;
 
 	/* try to parse integer first */
@@ -79,7 +74,7 @@ int cgroup_parse_log_level_str(const char *levelstr)
 	if (strcasecmp(levelstr, "DEBUG") == 0)
 		return CGROUP_LOG_DEBUG;
 
-	return CGROUP_DEFAULT_LOGLEVEL;
+	return CGRP_DEFAULT_LOGLEVEL;
 }
 
 void cgroup_set_loglevel(int loglevel)
@@ -88,9 +83,15 @@ void cgroup_set_loglevel(int loglevel)
 		cgroup_loglevel = loglevel;
 	else {
 		char *level_str = getenv("CGROUP_LOGLEVEL");
+
 		if (level_str != NULL)
 			cgroup_loglevel = cgroup_parse_log_level_str(level_str);
 		else
-			cgroup_loglevel = CGROUP_DEFAULT_LOGLEVEL;
+			cgroup_loglevel = CGRP_DEFAULT_LOGLEVEL;
 	}
+}
+
+int cgroup_get_loglevel(void)
+{
+	return cgroup_loglevel;
 }

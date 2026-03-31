@@ -1,15 +1,15 @@
 Source: libcgroup
-Priority: optional
 Section: libs
-Maintainer: Santiago Ruano Rincón <santiago.ruano-rincon@imt-atlantique.fr>
+Maintainer: Santiago Ruano Rincón <santiagorr@riseup.net>
 Build-Depends:
     debhelper-compat (= 13),
     bison,
     flex,
     libpam-dev,
+    libsystemd-dev,
 Rules-Requires-Root: no
-Standards-Version: 4.6.0
-Homepage: http://libcg.sourceforge.net/
+Standards-Version: 4.7.3
+Homepage: https://libcg.sourceforge.net/
 Vcs-Git: https://salsa.debian.org/debian/libcgroup.git
 Vcs-Browser: https://salsa.debian.org/debian/libcgroup
 
@@ -32,7 +32,7 @@ Description: control and monitor control groups (tools)
  .
  This package contains the command-line tools.
 
-Package: libcgroup1
+Package: libcgroup3
 Architecture: linux-any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
@@ -55,7 +55,7 @@ Architecture: linux-any
 Multi-Arch: same
 Depends:
     ${misc:Depends},
-    libcgroup1 (= ${binary:Version}),
+    libcgroup3 (= ${binary:Version}),
 Description: control and monitor control groups (development)
  Control Groups (cgroups) provide a mechanism for aggregating/partitioning sets
  of tasks, and all their future children, into hierarchical groups with

@@ -1,21 +1,15 @@
 #                                               -*- Autoconf -*-
+# SPDX-License-Identifier: LGPL-2.1-only
 # Process this file with autoconf to produce a configure script.
 #
 #  Copyright International Business Machines Corp. 2008
 #
 #  Authors:	Balbir Singh <balbir@linux.vnet.ibm.com>
-#  This program is free software; you can redistribute it and/or modify it
-#  under the terms of version 2.1 of the GNU Lesser General Public License
-#  as published by the Free Software Foundation.
-#
-#  This program is distributed in the hope that it would be useful, but
-#  WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
 AC_PREREQ([2.69])
 
 # In following section update all occurences of version, including soname
-AC_INIT([libcgroup],[2.0])
+AC_INIT([libcgroup],[3.2.0])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIRS([m4])
@@ -25,9 +19,9 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # set library version, soname is libcgroup.so.MAJOR
-AC_SUBST(LIBRARY_VERSION_MAJOR, 1)
-AC_SUBST(LIBRARY_VERSION_MINOR, 0)
-AC_SUBST(LIBRARY_VERSION_RELEASE, 42)
+AC_SUBST(LIBRARY_VERSION_MAJOR, 3)
+AC_SUBST(LIBRARY_VERSION_MINOR, 2)
+AC_SUBST(LIBRARY_VERSION_RELEASE, 0)
 
 # we do not want static libraries
 #AC_DISABLE_STATIC
@@ -37,18 +31,6 @@ LT_INIT
 
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADER([config.h])
-
-AC_ARG_ENABLE([bindings],
-	[AS_HELP_STRING([--enable-bindings],[enable python bindings [default=no]])],
-	[
-		if test "x$enableval" = xno; then
-			with_bindings=false
-		else
-			with_bindings=true
-		fi
-	],
-	[with_bindings = false])
-AM_CONDITIONAL([WITH_BINDINGS], [test x$with_bindings = xtrue])
 
 # Process command line options
 AC_ARG_ENABLE([tools],
@@ -86,6 +68,33 @@ AC_ARG_ENABLE([daemon],
 	],
 	[with_daemon=true])
 AM_CONDITIONAL([WITH_DAEMON], [test x$with_daemon = xtrue])
+
+AC_ARG_ENABLE([python],
+	[AS_HELP_STRING([--enable-python],
+	[build the python bindings, requires cython])])
+AS_IF([test "$enable_python" = yes], [
+	# cython version check
+	AS_IF([test "$CYTHON_VER_MAJ" -eq 0 -a "$CYTHON_VER_MIN" -lt 29], [
+		AC_MSG_ERROR([python bindings require cython 0.29 or higher])
+	])
+	AM_PATH_PYTHON([3])
+])
+AM_CONDITIONAL([ENABLE_PYTHON], [test "$enable_python" = yes])
+AC_DEFINE_UNQUOTED([ENABLE_PYTHON],
+	[$(test "$enable_python" = yes && echo 1 || echo 0)],
+	[Python bindings build flag.])
+
+AC_ARG_ENABLE([systemd],
+	[AS_HELP_STRING([--enable-systemd],[enable systemd support [default=yes]])],
+	[
+		if test "x$enableval" = xno; then
+			with_systemd=false
+		else
+			with_systemd=true
+		fi
+	],
+	[with_systemd=true])
+AM_CONDITIONAL([WITH_SYSTEMD], [test x$with_systemd = xtrue])
 
 AC_ARG_ENABLE([initscript-install],
 	[AS_HELP_STRING([--enable-initscript-install],[install init scripts [default=no]])],
@@ -137,6 +146,42 @@ AC_ARG_ENABLE([opaque-hierarchy],
 		fi
 	], [])
 
+AC_ARG_ENABLE([tests],
+      [AS_HELP_STRING([--enable-tests],[compile libcgroup tests [default=yes]])],
+      [
+		if test "x$enableval" = xno; then
+			with_tests=false
+		else
+			with_tests=true
+		fi
+       ],
+       [with_tests=true])
+AM_CONDITIONAL([WITH_TESTS], [test x$with_tests = xtrue])
+
+AC_ARG_ENABLE([samples],
+      [AS_HELP_STRING([--enable-samples],[compile libcgroup samples C programs [default=no]])],
+      [
+		if test "x$enableval" = xno; then
+			with_samples=false
+		else
+			with_samples=true
+		fi
+       ],
+       [with_samples=false])
+AM_CONDITIONAL([WITH_SAMPLES], [test x$with_samples = xtrue])
+
+AC_ARG_ENABLE([unittests],
+      [AS_HELP_STRING([--enable-unittests],[compile libcgroup unit tests [default=no]])],
+      [
+		if test "x$enableval" = xno; then
+			with_unittests=false
+		else
+			with_unittests=true
+		fi
+       ],
+       [with_unittests=false])
+AM_CONDITIONAL([WITH_UNITTESTS], [test x$with_unittests = xtrue])
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
@@ -174,6 +219,17 @@ AC_FUNC_REALLOC
 AC_FUNC_STAT
 AC_CHECK_FUNCS([getmntent hasmntopt memset mkdir rmdir strdup])
 
+orig_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -D_GNU_SOURCE"
+AC_FUNC_STRERROR_R
+CFLAGS="$orig_CFLAGS"
+
+AC_SEARCH_LIBS(
+	[fts_open],
+	[fts],
+	[],
+	[AC_MSG_ERROR([Unable to find the fts_open() function])])
+
 if test x$with_pam = xtrue; then
 	AC_CHECK_LIB(
 		[pam],
@@ -192,28 +248,41 @@ if test x$with_pam = xtrue; then
 		header files!])])
 fi
 
+if test x$with_systemd = xtrue; then
+       AC_CHECK_LIB([systemd],
+                    [sd_bus_message_new_method_call],
+                    [],
+                    [AC_MSG_ERROR([Cannot compile systemd support without
+		    libsystemd!])])
+
+       AC_CHECK_HEADERS(
+               [systemd/sd-bus.h],
+               [],
+               [AC_MSG_ERROR([Cannot compile systemd support - missing
+	       systemd header files!])])
+fi
+
 AX_CODE_COVERAGE
 
 AC_CONFIG_FILES([Makefile
-	tests/Makefile
-	tests/ftests/Makefile
-	tests/gunit/Makefile
-	tests/tools/testenv.sh
-	tests/tools/Makefile
-	tests/tools/cgconfigparser/Makefile
-	tests/tools/cgclassify/Makefile
-	tests/tools/multimount/Makefile
-	tests/runlibcgrouptest.sh
 	src/Makefile
 	src/daemon/Makefile
 	src/tools/Makefile
 	src/pam/Makefile
-	src/bindings/Makefile
+	src/python/Makefile
 	scripts/Makefile
 	scripts/init.d/cgconfig
 	scripts/init.d/cgred
+	tests/Makefile
+	tests/ftests/Makefile
+	tests/gunit/Makefile
 	samples/Makefile
+	samples/c/Makefile
+	samples/cmdline/Makefile
+	samples/config/Makefile
+	samples/python/Makefile
 	include/Makefile
+	include/libcgroup/init.h
 	doc/Makefile
 	doc/man/Makefile
 	dist/Makefile

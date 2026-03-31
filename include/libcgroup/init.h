@@ -9,7 +9,28 @@
 #include <features.h>
 #endif
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define CGROUP_VER_MAJOR	3
+#define CGROUP_VER_MINOR	2
+#define CGROUP_VER_RELEASE	0
+
+struct cgroup_library_version {
+	unsigned int major;
+	unsigned int minor;
+	unsigned int release;
+};
+
+/**
+ * Query the library version information
+ *
+ * This function returns a pointer to a populated cgroup_library_version
+ * struct.  The caller does not need to free the structure when finished.
+ *
+ */
+const struct cgroup_library_version *cgroup_version(void);
 
 /**
  * @defgroup group_init 1. Initialization
@@ -50,7 +71,7 @@ int cgroup_init(void);
  * and cgroup_get_subsys_mount_point_end() to get all of them.
  * @param controller Name of the controller
  * @param mount_point The string where the mount point location is stored.
- * 	Please note, the caller must free the mount_point.
+ *	Please note, the caller must free the mount_point.
  */
 int cgroup_get_subsys_mount_point(const char *controller, char **mount_point);
 
@@ -58,6 +79,8 @@ int cgroup_get_subsys_mount_point(const char *controller, char **mount_point);
  * @}
  * @}
  */
-__END_DECLS
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* _LIBCGROUP_INIT_H */

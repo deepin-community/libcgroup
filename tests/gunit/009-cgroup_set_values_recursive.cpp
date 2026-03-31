@@ -1,22 +1,9 @@
+/* SPDX-License-Identifier: LGPL-2.1-only */
 /**
  * libcgroup googletest for cgroup_set_values_recursive()
  *
  * Copyright (c) 2020 Oracle and/or its affiliates.
  * Author: Tom Hromatka <tom.hromatka@oracle.com>
- */
-
-/*
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of version 2.1 of the GNU Lesser General Public License as
- * published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, see <http://www.gnu.org/licenses>.
  */
 
 #include <ftw.h>
@@ -33,7 +20,7 @@ static const char * const NAMES[] = {
 	"cpu.foo",
 	"cpu.bar"
 };
-static const int NAMES_CNT = sizeof(NAMES) / sizeof(NAMES[0]);
+static const int NAMES_CNT = ARRAY_SIZE(NAMES);
 
 static const char * const VALUES[] = {
 	"999",
@@ -41,7 +28,7 @@ static const char * const VALUES[] = {
 	"random",
 	"data"
 };
-static const int VALUES_CNT = sizeof(VALUES) / sizeof(VALUES[0]);
+static const int VALUES_CNT = ARRAY_SIZE(VALUES);
 
 
 class SetValuesRecursiveTest : public ::testing::Test {
@@ -98,7 +85,7 @@ TEST_F(SetValuesRecursiveTest, SuccessfulSetValues)
 	char *val;
 	FILE *f;
 
-	ret = snprintf(ctrlr.name, FILENAME_MAX - 1, "cpu");
+	ret = snprintf(ctrlr.name, CONTROL_NAMELEN_MAX, "cpu");
 	ASSERT_GT(ret, 0);
 
 	for (i = 0; i < NAMES_CNT; i++) {
@@ -106,9 +93,13 @@ TEST_F(SetValuesRecursiveTest, SuccessfulSetValues)
 					sizeof(struct control_value));
 		ASSERT_NE(ctrlr.values[i], nullptr);
 
-		strncpy(ctrlr.values[i]->name, NAMES[i], FILENAME_MAX);
+		strncpy(ctrlr.values[i]->name, NAMES[i], FILENAME_MAX - 1);
+		ctrlr.values[i]->name[FILENAME_MAX - 1] = '\0';
+
 		strncpy(ctrlr.values[i]->value, VALUES[i],
-			CG_CONTROL_VALUE_MAX);
+			CG_CONTROL_VALUE_MAX - 1);
+		ctrlr.values[i]->value[CG_CONTROL_VALUE_MAX - 1] = '\0';
+
 		if (i == 0)
 			ctrlr.values[i]->dirty = true;
 		else
@@ -116,7 +107,7 @@ TEST_F(SetValuesRecursiveTest, SuccessfulSetValues)
 		ctrlr.index++;
 	}
 
-	ret = cgroup_set_values_recursive(PARENT_DIR, &ctrlr, true);
+	ret = cgroup_set_values_recursive(PARENT_DIR, &ctrlr, false);
 	ASSERT_EQ(ret, 0);
 
 	for (i = 0; i < NAMES_CNT; i++) {

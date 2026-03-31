@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LGPL-2.1-only
 #
 # Basic cgsnapshot functionality test
 #
@@ -6,35 +7,41 @@
 # Author: Tom Hromatka <tom.hromatka@oracle.com>
 #
 
-#
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of version 2.1 of the GNU Lesser General Public License as
-# published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this library; if not, see <http://www.gnu.org/licenses>.
-#
-
 from cgroup import Cgroup, CgroupVersion
 import consts
 import ftests
-import os
 import sys
+import os
 
-CONTROLLER='cpuset'
-CGNAME="005cgsnapshot"
-CGSNAPSHOT = """group 005cgsnapshot {
-                    cpuset {
-                            cpuset.cpus.partition="member";
-                            cpuset.mems="";
-                            cpuset.cpus="";
-                    }
-            }"""
+CONTROLLER = 'cpuset'
+CGNAME = '005cgsnapshot'
+CGSNAPSHOT = [
+    """group 005cgsnapshot {
+            cpuset {
+                    cpuset.cpus.partition="member";
+                    cpuset.mems="";
+                    cpuset.cpus="";
+            }
+    }""",
+    """group 005cgsnapshot {
+            cpuset {
+                    cpuset.cpus.exclusive="";
+                    cpuset.cpus.partition="member";
+                    cpuset.mems="";
+                    cpuset.cpus="";
+            }
+    }""",
+    """group 005cgsnapshot {
+            cpuset {
+                    cpuset.cpus.exclusive.effective="";
+                    cpuset.cpus.exclusive="";
+                    cpuset.cpus.partition="member";
+                    cpuset.mems="";
+                    cpuset.cpus="";
+            }
+    }"""
+]
+
 
 def prereqs(config):
     result = consts.TEST_PASSED
@@ -42,28 +49,41 @@ def prereqs(config):
 
     if CgroupVersion.get_version('cpuset') != CgroupVersion.CGROUP_V2:
         result = consts.TEST_SKIPPED
-        cause = "This test requires the cgroup v2 cpuset controller"
+        cause = 'This test requires the cgroup v2 cpuset controller'
 
     return result, cause
 
+
 def setup(config):
     Cgroup.create(config, CONTROLLER, CGNAME)
+
 
 def test(config):
     result = consts.TEST_PASSED
     cause = None
 
-    expected = Cgroup.snapshot_to_dict(CGSNAPSHOT)
+    expected_1 = Cgroup.snapshot_to_dict(CGSNAPSHOT[0])
+    expected_2 = Cgroup.snapshot_to_dict(CGSNAPSHOT[1])
+    expected_sudo = Cgroup.snapshot_to_dict(CGSNAPSHOT[2])
     actual = Cgroup.snapshot(config, controller=CONTROLLER)
 
-    if expected[CGNAME] != actual[CGNAME]:
+    if (
+            expected_1[CGNAME].controllers[CONTROLLER] !=
+            actual[CGNAME].controllers[CONTROLLER] and
+            expected_2[CGNAME].controllers[CONTROLLER] !=
+            actual[CGNAME].controllers[CONTROLLER] and
+            expected_sudo[CGNAME].controllers[CONTROLLER] !=
+            actual[CGNAME].controllers[CONTROLLER]
+       ):
         result = consts.TEST_FAILED
-        cause = "Expected cgsnapshot result did not equal actual cgsnapshot"
+        cause = 'Expected cgsnapshot result did not equal actual cgsnapshot'
 
     return result, cause
 
+
 def teardown(config):
     Cgroup.delete(config, CONTROLLER, CGNAME)
+
 
 def main(config):
     [result, cause] = prereqs(config)
@@ -76,8 +96,11 @@ def main(config):
 
     return [result, cause]
 
+
 if __name__ == '__main__':
     config = ftests.parse_args()
     # this test was invoked directly.  run only it
     config.args.num = int(os.path.basename(__file__).split('-')[0])
     sys.exit(ftests.main(config))
+
+# vim: set et ts=4 sw=4:

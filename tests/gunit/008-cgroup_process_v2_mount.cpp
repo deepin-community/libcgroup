@@ -1,22 +1,9 @@
+/* SPDX-License-Identifier: LGPL-2.1-only */
 /**
  * libcgroup googletest for cgroup_process_v2_mnt()
  *
  * Copyright (c) 2020 Oracle and/or its affiliates.
  * Author: Tom Hromatka <tom.hromatka@oracle.com>
- */
-
-/*
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of version 2.1 of the GNU Lesser General Public License as
- * published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, see <http://www.gnu.org/licenses>.
  */
 
 #include <ftw.h>
@@ -37,8 +24,7 @@ static const char * const CONTROLLERS[] = {
 	"pids",
 	"rdma",
 };
-static const int CONTROLLERS_CNT =
-	sizeof(CONTROLLERS) / sizeof(CONTROLLERS[0]);
+static const int CONTROLLERS_CNT = ARRAY_SIZE(CONTROLLERS);
 
 static int mnt_tbl_idx = 0;
 
@@ -69,10 +55,6 @@ class CgroupProcessV2MntTest : public ::testing::Test {
 
 	void SetUp() override
 	{
-		char tmp_path[FILENAME_MAX];
-		int i, ret;
-		FILE *f;
-
 		CreateHierarchy(PARENT_DIR);
 
 		/* make another directory to test the duplicate logic */
@@ -119,13 +101,14 @@ TEST_F(CgroupProcessV2MntTest, AddV2Mount)
 	ret = cgroup_process_v2_mnt(&ent, &mnt_tbl_idx);
 
 	ASSERT_EQ(ret, 0);
-	ASSERT_EQ(mnt_tbl_idx, 6);
+	ASSERT_EQ(mnt_tbl_idx, 7);
 	ASSERT_STREQ(cg_mount_table[0].name, "cpuset");
 	ASSERT_STREQ(cg_mount_table[1].name, "cpu");
 	ASSERT_STREQ(cg_mount_table[2].name, "io");
 	ASSERT_STREQ(cg_mount_table[3].name, "memory");
 	ASSERT_STREQ(cg_mount_table[4].name, "pids");
 	ASSERT_STREQ(cg_mount_table[5].name, "rdma");
+	ASSERT_STREQ(cg_mount_table[6].name, "cgroup");
 
 	ASSERT_STREQ(cg_mount_table[0].mount.path, ent.mnt_dir);
 	ASSERT_STREQ(cg_mount_table[1].mount.path, ent.mnt_dir);
@@ -133,6 +116,7 @@ TEST_F(CgroupProcessV2MntTest, AddV2Mount)
 	ASSERT_STREQ(cg_mount_table[3].mount.path, ent.mnt_dir);
 	ASSERT_STREQ(cg_mount_table[4].mount.path, ent.mnt_dir);
 	ASSERT_STREQ(cg_mount_table[5].mount.path, ent.mnt_dir);
+	ASSERT_STREQ(cg_mount_table[6].mount.path, ent.mnt_dir);
 }
 
 TEST_F(CgroupProcessV2MntTest, AddV2Mount_Duplicate)
@@ -149,13 +133,14 @@ TEST_F(CgroupProcessV2MntTest, AddV2Mount_Duplicate)
 	ret = cgroup_process_v2_mnt(&ent, &mnt_tbl_idx);
 
 	ASSERT_EQ(ret, 0);
-	ASSERT_EQ(mnt_tbl_idx, 6);
+	ASSERT_EQ(mnt_tbl_idx, 7);
 	ASSERT_STREQ(cg_mount_table[0].name, "cpuset");
 	ASSERT_STREQ(cg_mount_table[1].name, "cpu");
 	ASSERT_STREQ(cg_mount_table[2].name, "io");
 	ASSERT_STREQ(cg_mount_table[3].name, "memory");
 	ASSERT_STREQ(cg_mount_table[4].name, "pids");
 	ASSERT_STREQ(cg_mount_table[5].name, "rdma");
+	ASSERT_STREQ(cg_mount_table[6].name, "cgroup");
 
 	ASSERT_STREQ(cg_mount_table[0].mount.next->path, ent.mnt_dir);
 	ASSERT_STREQ(cg_mount_table[1].mount.next->path, ent.mnt_dir);
@@ -163,6 +148,7 @@ TEST_F(CgroupProcessV2MntTest, AddV2Mount_Duplicate)
 	ASSERT_STREQ(cg_mount_table[3].mount.next->path, ent.mnt_dir);
 	ASSERT_STREQ(cg_mount_table[4].mount.next->path, ent.mnt_dir);
 	ASSERT_STREQ(cg_mount_table[5].mount.next->path, ent.mnt_dir);
+	ASSERT_STREQ(cg_mount_table[6].mount.next->path, ent.mnt_dir);
 }
 
 /*

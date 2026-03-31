@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: LGPL-2.1-only */
 #ifndef _LIBCGROUP_CONFIG_H
 #define _LIBCGROUP_CONFIG_H
 
@@ -9,7 +10,9 @@
 #include <features.h>
 #endif
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @defgroup group_config 5. Configuration
@@ -68,7 +71,7 @@ int cgroup_config_unload_config(const char *pathname, int flags);
  * then.
  *
  * @param new_default New default permissions from this group are copied to
- * libcgroup internal structures. I.e., this group can be freed immediatelly
+ * libcgroup internal structures. I.e., this group can be freed immediately
  * after this function returns.
  */
 int cgroup_config_set_default(struct cgroup *new_default);
@@ -97,8 +100,7 @@ int cgroup_load_templates_cache_from_files(int *file_index);
  * @param tmpl_files
  */
 struct cgroup_string_list;
-void cgroup_templates_cache_set_source_files(
-	struct cgroup_string_list *tmpl_files);
+void cgroup_templates_cache_set_source_files(struct cgroup_string_list *tmpl_files);
 
 /**
  * Physically create a new control group in kernel, based on given control
@@ -120,14 +122,14 @@ void cgroup_templates_cache_set_source_files(
  * @param template_name Template name used for cgroup setting
  * @param flags Bit flags to change the behavior
  */
-int cgroup_config_create_template_group(
-	struct cgroup *cgroup, char *template_name,
-	int flags);
+int cgroup_config_create_template_group(struct cgroup *cgrp, char *template_name, int flags);
 
 /**
  * @}
  * @}
  */
-__END_DECLS
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /*_LIBCGROUP_CONFIG_H*/

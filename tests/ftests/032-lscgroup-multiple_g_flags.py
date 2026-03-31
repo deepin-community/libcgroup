@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LGPL-2.1-only
 #
 # lscgroup functionality test - multiple '-g' flags
 #
@@ -6,26 +7,12 @@
 # Author: Tom Hromatka <tom.hromatka@oracle.com>
 #
 
-#
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of version 2.1 of the GNU Lesser General Public License as
-# published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this library; if not, see <http://www.gnu.org/licenses>.
-#
-
 from cgroup import Cgroup, CgroupVersion
 import consts
 import ftests
-import os
-import sys
 import utils
+import sys
+import os
 
 CONTROLLER = 'cpuset'
 PARENT_CGNAME = '032lscgroup'
@@ -42,31 +29,49 @@ SIBLING_CHILD_CGNAME = 'cousinlscgroup'
 # When invoking lscgroup with the -g flag, a trailing slash is present on
 # the first cgroup returned (i.e. the cgroup specified in the -g flag)
 #
-EXPECTED_OUT1 = '''{}:/{}/
+EXPECTED_OUT1 = """{}:/{}/
 {}:/{}/{}
 {}:/{}/{}/{}
 {}:/{}/
-{}:/{}/{}'''.format(CONTROLLER, PARENT_CGNAME,
+{}:/{}/{}""".format(CONTROLLER, PARENT_CGNAME,
                     CONTROLLER, PARENT_CGNAME, CHILD_CGNAME,
                     CONTROLLER, PARENT_CGNAME, CHILD_CGNAME, GRANDCHILD_CGNAME,
                     CONTROLLER, SIBLING_CGNAME,
                     CONTROLLER, SIBLING_CGNAME, SIBLING_CHILD_CGNAME)
 
+
 def prereqs(config):
     result = consts.TEST_PASSED
     cause = None
 
+    v2_cnt = 0
+    mount_list = Cgroup.get_cgroup_mounts(config)
+
+    for mount in mount_list:
+        if mount.version == CgroupVersion.CGROUP_V2:
+            v2_cnt += 1
+
+    if v2_cnt > 1:
+        # There is a bug in lscgroup - see issue #50 - where it doesn't
+        # properly list the enabled controllers for a cgroup v2 cgroup.
+        # Skip this test because of this
+        result = consts.TEST_SKIPPED
+        cause = 'See Github Issue #50 - lscgroup lists controllers...'
+
     return result, cause
+
 
 def setup(config):
     Cgroup.create(config, CONTROLLER, PARENT_CGNAME)
-    Cgroup.create(config, CONTROLLER, os.path.join(PARENT_CGNAME, CHILD_CGNAME))
+    Cgroup.create(config, CONTROLLER,
+                  os.path.join(PARENT_CGNAME, CHILD_CGNAME))
     Cgroup.create(config, CONTROLLER,
                   os.path.join(PARENT_CGNAME, CHILD_CGNAME, GRANDCHILD_CGNAME))
 
     Cgroup.create(config, CONTROLLER, SIBLING_CGNAME)
     Cgroup.create(config, CONTROLLER,
                   os.path.join(SIBLING_CGNAME, SIBLING_CHILD_CGNAME))
+
 
 def test(config):
     result = consts.TEST_PASSED
@@ -76,23 +81,27 @@ def test(config):
                           path=[PARENT_CGNAME, SIBLING_CGNAME])
     if out != EXPECTED_OUT1:
         result = consts.TEST_FAILED
-        cause = "Expected lscgroup output doesn't match received output\n" \
-                "Expected:\n{}\n" \
-                "Received:\n{}\n".format(utils.indent(EXPECTED_OUT1, 4),
-                                         utils.indent(out, 4))
+        cause = (
+                    "Expected lscgroup output doesn't match received output\n"
+                    'Expected:\n{}\n'
+                    'Received:\n{}\n'
+                    ''.format(utils.indent(EXPECTED_OUT1, 4),
+                              utils.indent(out, 4))
+                )
         return result, cause
 
     ret = Cgroup.lscgroup(config, cghelp=True)
-    if not "Usage:" in ret:
+    if 'Usage:' not in ret:
         result = consts.TEST_FAILED
-        cause = "Failed to print help text"
-        return result, cause
+        cause = 'Failed to print help text'
 
     return result, cause
+
 
 def teardown(config):
     Cgroup.delete(config, CONTROLLER, PARENT_CGNAME, recursive=True)
     Cgroup.delete(config, CONTROLLER, SIBLING_CGNAME, recursive=True)
+
 
 def main(config):
     [result, cause] = prereqs(config)
@@ -105,8 +114,11 @@ def main(config):
 
     return [result, cause]
 
+
 if __name__ == '__main__':
     config = ftests.parse_args()
     # this test was invoked directly.  run only it
     config.args.num = int(os.path.basename(__file__).split('-')[0])
     sys.exit(ftests.main(config))
+
+# vim: set et ts=4 sw=4:

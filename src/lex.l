@@ -1,14 +1,8 @@
-/*
+/* SPDX-License-Identifier: LGPL-2.1-only */
+/**
  * Copyright IBM Corporation. 2007
  *
  * Authors:	Balbir Singh <balbir@linux.vnet.ibm.com>
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2.1 of the GNU Lesser General Public License
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it would be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 %{
@@ -42,6 +36,7 @@ jmp_buf parser_error_env;
 "group"		{return GROUP;}
 "namespace"	{return NAMESPACE;}
 "template"	{return TEMPLATE;}
+"systemd"     	{return SYSTEMD;}
 "default"	{yylval.name = strdup(yytext); return DEFAULT;}
 [a-zA-Z0-9_\-\/\.\,\%\@\\]+ {yylval.name = strdup(yytext); return ID;}
 \"[^"]*\" {yylval.name = strdup(yytext+1); yylval.name[strlen(yylval.name)-1] = '\0'; return ID; }

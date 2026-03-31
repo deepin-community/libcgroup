@@ -1,22 +1,9 @@
+/* SPDX-License-Identifier: LGPL-2.1-only */
 /**
  * libcgroup googletest for cgroup_create_cgroup()
  *
  * Copyright (c) 2020 Oracle and/or its affiliates.
  * Author: Tom Hromatka <tom.hromatka@oracle.com>
- */
-
-/*
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of version 2.1 of the GNU Lesser General Public License as
- * published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, see <http://www.gnu.org/licenses>.
  */
 
 #include <dirent.h>
@@ -36,8 +23,7 @@ static const char * const CONTROLLERS[] = {
 	"namespaces",
 	"netns",
 };
-static const int CONTROLLERS_CNT =
-	sizeof(CONTROLLERS) / sizeof(CONTROLLERS[0]);
+static const int CONTROLLERS_CNT = ARRAY_SIZE(CONTROLLERS);
 
 static cg_version_t VERSIONS[] = {
 	CGROUP_V1,
@@ -47,8 +33,7 @@ static cg_version_t VERSIONS[] = {
 	CGROUP_V1,
 	CGROUP_V2,
 };
-static const int VERSIONS_CNT =
-	sizeof(VERSIONS) / sizeof(VERSIONS[0]);
+static const int VERSIONS_CNT = ARRAY_SIZE(VERSIONS);
 
 class CgroupCreateCgroupTest : public ::testing::Test {
 	protected:
@@ -72,15 +57,13 @@ class CgroupCreateCgroupTest : public ::testing::Test {
 		memset(&cg_namespace_table, 0, sizeof(cg_namespace_table));
 
 		for (i = 0; i < CONTROLLERS_CNT; i++) {
-			snprintf(cg_mount_table[i].name, FILENAME_MAX,
-				 "%s", CONTROLLERS[i]);
+			snprintf(cg_mount_table[i].name, CONTROL_NAMELEN_MAX, "%s", CONTROLLERS[i]);
 			cg_mount_table[i].version = VERSIONS[i];
 
 			switch (VERSIONS[i]) {
 			case CGROUP_V1:
 				snprintf(cg_mount_table[i].mount.path,
-					 FILENAME_MAX, "%s/%s", PARENT_DIR,
-					 CONTROLLERS[i]);
+					 FILENAME_MAX, "%s/%s", PARENT_DIR, CONTROLLERS[i]);
 
 				ret = mkdir(cg_mount_table[i].mount.path, MODE);
 				ASSERT_EQ(ret, 0);
@@ -90,12 +73,21 @@ class CgroupCreateCgroupTest : public ::testing::Test {
 					 FILENAME_MAX, "%s", PARENT_DIR);
 
 				memset(tmp_path, 0, sizeof(tmp_path));
-				snprintf(tmp_path, FILENAME_MAX - 1,
-					 "%s/cgroup.subtree_control",
+				snprintf(tmp_path, FILENAME_MAX - 1, "%s/cgroup.subtree_control",
 					 PARENT_DIR);
 
 				f = fopen(tmp_path, "w");
 				ASSERT_NE(f, nullptr);
+				fclose(f);
+
+				memset(tmp_path, 0, sizeof(tmp_path));
+				snprintf(tmp_path, FILENAME_MAX - 1,
+					 "%s/cgroup.controllers",
+					 PARENT_DIR);
+
+				f = fopen(tmp_path, "a");
+				ASSERT_NE(f, nullptr);
+				fprintf(f, "%s ",  CONTROLLERS[i]);
 				fclose(f);
 				break;
 			default:
@@ -128,8 +120,7 @@ class CgroupCreateCgroupTest : public ::testing::Test {
 	}
 };
 
-static void verify_cgroup_created(const char * const cg_name,
-				  const char * const ctrl)
+static void verify_cgroup_created(const char * const cgrp_name, const char * const ctrl)
 {
 	char tmp_path[FILENAME_MAX];
 	DIR *dir;
@@ -137,11 +128,9 @@ static void verify_cgroup_created(const char * const cg_name,
 	memset(tmp_path, 0, sizeof(tmp_path));
 
 	if (ctrl)
-		snprintf(tmp_path, FILENAME_MAX - 1, "%s/%s/%s",
-			 PARENT_DIR, ctrl, cg_name);
+		snprintf(tmp_path, FILENAME_MAX - 1, "%s/%s/%s", PARENT_DIR, ctrl, cgrp_name);
 	else
-		snprintf(tmp_path, FILENAME_MAX - 1, "%s/%s",
-			 PARENT_DIR, cg_name);
+		snprintf(tmp_path, FILENAME_MAX - 1, "%s/%s", PARENT_DIR, cgrp_name);
 
 	dir = opendir(tmp_path);
 	ASSERT_NE(dir, nullptr);
@@ -154,8 +143,7 @@ static void verify_subtree_contents(const char * const expected)
 	FILE *f;
 
 	memset(tmp_path, 0, sizeof(tmp_path));
-	snprintf(tmp_path, FILENAME_MAX - 1, "%s/cgroup.subtree_control",
-		 PARENT_DIR);
+	snprintf(tmp_path, FILENAME_MAX - 1, "%s/cgroup.subtree_control", PARENT_DIR);
 	f = fopen(tmp_path, "r");
 	ASSERT_NE(f, nullptr);
 
@@ -166,67 +154,67 @@ static void verify_subtree_contents(const char * const expected)
 
 TEST_F(CgroupCreateCgroupTest, CgroupCreateCgroupV1)
 {
-	struct cgroup_controller *ctrl;
-	struct cgroup *cg = NULL;
+	const char * const cgrp_name = "MyV1Cgroup";
 	const char * const ctrl_name = "cpu";
-	const char * const cg_name = "MyV1Cgroup";
+	struct cgroup_controller *ctrl;
+	struct cgroup *cgrp = NULL;
 	int ret;
 
-	cg = cgroup_new_cgroup(cg_name);
-	ASSERT_NE(cg, nullptr);
+	cgrp = cgroup_new_cgroup(cgrp_name);
+	ASSERT_NE(cgrp, nullptr);
 
-	ctrl = cgroup_add_controller(cg, ctrl_name);
+	ctrl = cgroup_add_controller(cgrp, ctrl_name);
 	ASSERT_NE(ctrl, nullptr);
 
-	ret = cgroup_create_cgroup(cg, 1);
+	ret = cgroup_create_cgroup(cgrp, 1);
 	ASSERT_EQ(ret, 0);
 
-	verify_cgroup_created(cg_name, ctrl_name);
+	verify_cgroup_created(cgrp_name, ctrl_name);
 }
 
 TEST_F(CgroupCreateCgroupTest, CgroupCreateCgroupV2)
 {
-	struct cgroup_controller *ctrl;
-	struct cgroup *cg = NULL;
+	const char * const cgrp_name = "MyV2Cgroup";
 	const char * const ctrl_name = "freezer";
-	const char * const cg_name = "MyV2Cgroup";
+	struct cgroup_controller *ctrl;
+	struct cgroup *cgrp = NULL;
 	int ret;
 
-	cg = cgroup_new_cgroup(cg_name);
-	ASSERT_NE(cg, nullptr);
+	cgrp = cgroup_new_cgroup(cgrp_name);
+	ASSERT_NE(cgrp, nullptr);
 
-	ctrl = cgroup_add_controller(cg, ctrl_name);
+	ctrl = cgroup_add_controller(cgrp, ctrl_name);
 	ASSERT_NE(ctrl, nullptr);
 
-	ret = cgroup_create_cgroup(cg, 0);
+	ret = cgroup_create_cgroup(cgrp, 0);
 	ASSERT_EQ(ret, 0);
 
-	verify_cgroup_created(cg_name, NULL);
+	verify_cgroup_created(cgrp_name, NULL);
 	verify_subtree_contents("+freezer");
 }
 
 TEST_F(CgroupCreateCgroupTest, CgroupCreateCgroupV1AndV2)
 {
-	struct cgroup_controller *ctrl;
-	struct cgroup *cg = NULL;
+	const char * const cgrp_name = "MyV1AndV2Cgroup";
 	const char * const ctrl1_name = "memory";
 	const char * const ctrl2_name = "cpuset";
-	const char * const cg_name = "MyV1AndV2Cgroup";
+	struct cgroup_controller *ctrl;
+	struct cgroup *cgrp = NULL;
 	int ret;
 
-	cg = cgroup_new_cgroup(cg_name);
-	ASSERT_NE(cg, nullptr);
+	cgrp = cgroup_new_cgroup(cgrp_name);
+	ASSERT_NE(cgrp, nullptr);
 
-	ctrl = cgroup_add_controller(cg, ctrl1_name);
+	ctrl = cgroup_add_controller(cgrp, ctrl1_name);
 	ASSERT_NE(ctrl, nullptr);
 	ctrl = NULL;
-	ctrl = cgroup_add_controller(cg, ctrl2_name);
+	ctrl = cgroup_add_controller(cgrp, ctrl2_name);
 	ASSERT_NE(ctrl, nullptr);
 
-	ret = cgroup_create_cgroup(cg, 1);
+	ret = cgroup_create_cgroup(cgrp, 1);
 	ASSERT_EQ(ret, 0);
 
-	verify_cgroup_created(cg_name, NULL);
-	verify_cgroup_created(cg_name, ctrl2_name);
+	verify_cgroup_created(cgrp_name, NULL);
+	verify_cgroup_created(cgrp_name, ctrl2_name);
 	verify_subtree_contents("+memory");
 }

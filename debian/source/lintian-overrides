@@ -2,5 +2,5 @@
 # and we have included the related full source code in d/missing-sources.
 # lintian is unable to identify the source code, so we are overriding the
 # error:
-libcgroup: source-is-missing googletest/googletest/libgtest.so
-libcgroup: source-is-missing googletest/googletest/libgtest_main.so
+libcgroup source: source-is-missing [googletest/googletest/libgtest.so]
+libcgroup source: source-is-missing [googletest/googletest/libgtest_main.so]

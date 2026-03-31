@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LGPL-2.1-only
 #
 # Config class for the libcgroup functional tests
 #
@@ -5,25 +6,12 @@
 # Author: Tom Hromatka <tom.hromatka@oracle.com>
 #
 
-#
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of version 2.1 of the GNU Lesser General Public License as
-# published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this library; if not, see <http://www.gnu.org/licenses>.
-#
-
-import consts
 from container import Container
-import os
 from process import Process
+import consts
 import utils
+import os
+
 
 class Config(object):
     def __init__(self, args, container=None):
@@ -35,9 +23,11 @@ class Config(object):
                 self.container = container
             else:
                 # Use the default container settings
-                self.container = Container(name=consts.DEFAULT_CONTAINER_NAME,
-                    stop_timeout=args.timeout, arch=None,
-                    distro=args.distro, release=args.release)
+                self.container = Container(name=args.name,
+                                           stop_timeout=args.timeout,
+                                           arch=None,
+                                           distro=args.distro,
+                                           release=args.release)
 
         self.process = Process()
 
@@ -49,17 +39,20 @@ class Config(object):
         self.verbose = False
 
     def __str__(self):
-        out_str = "Configuration\n"
+        out_str = 'Configuration\n'
         if self.args.container:
             out_str += utils.indent(str(self.container), 4)
         out_str += utils.indent(str(self.process), 4)
 
         return out_str
 
+
 class ConfigError(Exception):
     def __init__(self, message):
         super(ConfigError, self).__init__(message)
 
     def __str__(self):
-        out_str = "ConfigError:\n\tmessage = {}".format(self.message)
+        out_str = 'ConfigError:\n\tmessage = {}'.format(self.message)
         return out_str
+
+# vim: set et ts=4 sw=4:

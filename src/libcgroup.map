@@ -124,6 +124,7 @@ CGROUP_0.40 {
 } CGROUP_0.39;
 
 CGROUP_0.41 {
+	cgroup_get_cgroup_name;
 } CGROUP_0.40;
 
 CGROUP_0.42 {
@@ -139,3 +140,33 @@ CGROUP_2.0 {
 	cg_mount_table_lock;
 	cgroup_get_controller_version;
 } CGROUP_0.42;
+
+CGROUP_3.0 {
+	cgroup_convert_cgroup;
+	cgroup_cgxget;
+	cgroup_cgxset;
+	cgroup_version;
+	cgroup_list_mount_points;
+
+	/* libcgroup 3.0.1 */
+	cgroup_setup_mode;
+	cgroup_create_scope;
+	cgroup_set_default_scope_opts;
+	cgroup_get_controller_count;
+	cgroup_get_controller_by_index;
+	cgroup_get_controller_name;
+	cgroup_create_scope2;
+	cgroup_set_default_systemd_cgroup;
+	cgroup_write_systemd_default_cgroup;
+	cgroup_setup_mode;
+	is_cgroup_mode_legacy;
+	is_cgroup_mode_hybrid;
+	is_cgroup_mode_unified;
+	cgroup_is_systemd_enabled;
+	cgroup_attach_thread_tid;
+} CGROUP_2.0;
+
+CGROUP_3.2 {
+	cgroup_get_threads;
+	cgroup_get_loglevel;
+} CGROUP_3.0;

@@ -8,30 +8,31 @@ Last-Update: 2014-07-26
  scripts/init.d/cgred.in    | 2 +-
  2 files changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/scripts/init.d/cgconfig.in b/scripts/init.d/cgconfig.in
-index f299d0f..d293c62 100644
---- a/scripts/init.d/cgconfig.in
-+++ b/scripts/init.d/cgconfig.in
-@@ -36,6 +36,9 @@ CONFIG_FILE=/etc/cgconfig.conf
- servicename=cgconfig
- lockfile=/var/lock/subsys/$servicename
+Index: libcgroup/scripts/init.d/cgconfig.in
+===================================================================
+--- libcgroup.orig/scripts/init.d/cgconfig.in
++++ libcgroup/scripts/init.d/cgconfig.in
+@@ -32,6 +32,10 @@ servicename=cgconfig
  
+ 
+ lockfile=/run/lock/subsys/$servicename
++
 +# Sanity checks
 +[ -x $CGCONFIGPARSER_BIN ] || exit 0
 +
  #
  # Source LSB routines
  #
-diff --git a/scripts/init.d/cgred.in b/scripts/init.d/cgred.in
-index 247ec61..c13920d 100644
---- a/scripts/init.d/cgred.in
-+++ b/scripts/init.d/cgred.in
-@@ -37,7 +37,7 @@ CGRED_BIN=$sbindir/cgrulesengd
- CGRED_CONF=/etc/cgrules.conf
+Index: libcgroup/scripts/init.d/cgred.in
+===================================================================
+--- libcgroup.orig/scripts/init.d/cgred.in
++++ libcgroup/scripts/init.d/cgred.in
+@@ -30,7 +30,7 @@ sbindir=@sbindir@
+ CGRED_BIN=$sbindir/cgrulesengd
  
  # Sanity checks
--[ -x $CGRED_BIN ] || exit 1
-+[ -x $CGRED_BIN ] || exit 0
+-[[ -x $CGRED_BIN ]] || exit 1
++[[ -x $CGRED_BIN ]] || exit 0
  
- # Source function library & LSB routines
- . /etc/rc.d/init.d/functions
+ #
+ # Source LSB routines
